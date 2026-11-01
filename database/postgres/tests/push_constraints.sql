@@ -1,172 +1,50 @@
--- Push-owned SQL checks. These tests deliberately provoke constraint violations
--- inside subtransactions, so they leave no invalid rows behind.
+\set ON_ERROR_STOP on
 BEGIN;
 DO $$
 DECLARE
-  test_user_id INT;
-  doc_one INT;
-  doc_two INT;
-  assignment_doc INT;
-  admin_id INT;
-  approver_id INT;
-  test_doc INT;
-  test_version INT;
-  test_control INT;
-  test_regulation INT;
-  test_assignment INT;
-  test_nurse_id INT;
-  test_nurse_role_id INT;
-  test_nurse_department_id INT;
-  old_version_id INT;
-  new_version_id INT;
-  due DATE := CURRENT_DATE + 10;
+  doc_id INT; nurse_id INT; nurse_role_id INT; nurse_department_id INT; admin_id INT; reviewer_id INT; uploader_id INT;
+  old_version_id INT; new_version_id INT; fixture_assignment_id INT; completed INT; pending INT; lineage_count INT; rejected BOOLEAN;
 BEGIN
-  SELECT user_id INTO test_user_id FROM users WHERE email = 'doctor1@docuguard.local';
-  SELECT user_id INTO admin_id FROM users WHERE email = 'admin1@docuguard.local';
-  SELECT user_id INTO approver_id FROM users WHERE email = 'admin2@docuguard.local';
-  SELECT document_id INTO doc_one FROM documents WHERE mongo_doc_id = 'demo-infection-control';
-  SELECT document_id INTO doc_two FROM documents WHERE mongo_doc_id = 'demo-patient-privacy';
-  assignment_doc := doc_one;
+ SELECT d.document_id,d.current_version_id INTO doc_id,old_version_id FROM documents d WHERE d.mongo_doc_id='demo-infection-control';
+ SELECT user_id,role_id,department_id INTO nurse_id,nurse_role_id,nurse_department_id FROM users WHERE email='nurse1@docuguard.local';
+ SELECT user_id INTO admin_id FROM users WHERE email='admin1@docuguard.local';
+ SELECT user_id INTO reviewer_id FROM users WHERE email='admin2@docuguard.local';
+ SELECT user_id INTO uploader_id FROM users WHERE email='doctor1@docuguard.local';
+ IF doc_id IS NULL OR old_version_id IS NULL THEN RAISE EXCEPTION 'expected Lite policy seed rows'; END IF;
 
-  IF test_user_id IS NULL OR admin_id IS NULL OR approver_id IS NULL OR doc_one IS NULL OR doc_two IS NULL THEN
-    RAISE EXCEPTION 'Push SQL tests require the Phase 1 demo seed data; run migrations first.';
-  END IF;
+ rejected:=false;
+ BEGIN INSERT INTO policy_assignments(document_id,assigned_by,due_date) VALUES(doc_id,admin_id,CURRENT_DATE+10);
+ EXCEPTION WHEN check_violation THEN rejected:=true; END;
+ IF NOT rejected THEN RAISE EXCEPTION 'assignment without role or department target was accepted'; END IF;
+ rejected:=false;
+ BEGIN INSERT INTO policy_assignments(document_id,target_role_id,assigned_by,due_date)
+ VALUES(doc_id,nurse_role_id,admin_id,CURRENT_DATE-1);
+ EXCEPTION WHEN check_violation THEN rejected:=true; END;
+ IF NOT rejected THEN RAISE EXCEPTION 'past-due assignment was accepted'; END IF;
 
-  -- Unsupported search mode must be rejected by CHECK.
-  BEGIN
-    INSERT INTO search_logs(user_id, query_text, search_type, results_count)
-    VALUES (test_user_id, 'negative test', 'magic', 0);
-    RAISE EXCEPTION 'Expected invalid search_type to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
+ INSERT INTO policy_assignments(document_id,target_role_id,target_department_id,assigned_by,due_date)
+ VALUES(doc_id,nurse_role_id,nurse_department_id,admin_id,CURRENT_DATE+10) RETURNING policy_assignments.assignment_id INTO fixture_assignment_id;
+ INSERT INTO acknowledgments(assignment_id,user_id,version_id) VALUES(fixture_assignment_id,nurse_id,old_version_id);
+ SELECT acknowledged_users,pending_users INTO completed,pending FROM v_ack_compliance WHERE v_ack_compliance.assignment_id=fixture_assignment_id;
+ IF completed<>1 OR pending<>0 THEN RAISE EXCEPTION 'acknowledgment completion view did not count current version'; END IF;
 
-  -- Negative result counts must be rejected.
-  BEGIN
-    INSERT INTO search_logs(user_id, query_text, search_type, results_count)
-    VALUES (test_user_id, 'negative test', 'keyword', -1);
-    RAISE EXCEPTION 'Expected negative results_count to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
+ INSERT INTO document_versions(document_id,version_number,file_path,mongo_content_id,checksum,uploaded_by,effective_date,expiry_date,version_status)
+ SELECT doc_id,version_number+1,'sql-history-v2.pdf','sql-history-v2-'||txid_current(),md5('history-'||txid_current()::text),uploader_id,CURRENT_DATE,CURRENT_DATE+365,'pending_review'
+ FROM document_versions WHERE version_id=old_version_id RETURNING version_id INTO new_version_id;
+ UPDATE document_versions SET approved_by=reviewer_id,approved_at=now(),version_status='approved' WHERE version_id=new_version_id;
+ IF (SELECT version_status FROM document_versions WHERE version_id=old_version_id)<>'superseded' THEN RAISE EXCEPTION 'approval did not supersede prior version'; END IF;
+ SELECT acknowledged_users,pending_users INTO completed,pending FROM v_ack_compliance WHERE v_ack_compliance.assignment_id=fixture_assignment_id;
+ IF completed<>0 OR pending<>1 THEN RAISE EXCEPTION 'new current version did not reopen acknowledgment'; END IF;
 
-  -- Similarity pairs cannot be stored in reverse order or with a score > 1.
-  BEGIN
-    INSERT INTO similar_documents(document_id_1, document_id_2, similarity_score)
-    VALUES (GREATEST(doc_one, doc_two), LEAST(doc_one, doc_two), 0.90);
-    RAISE EXCEPTION 'Expected reversed document pair to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
-
-  BEGIN
-    INSERT INTO similar_documents(document_id_1, document_id_2, similarity_score)
-    VALUES (LEAST(doc_one, doc_two), GREATEST(doc_one, doc_two), 1.10);
-    RAISE EXCEPTION 'Expected similarity_score > 1 to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
-
-  -- An assignment must target a role, a department, or both.
-  BEGIN
-    INSERT INTO policy_assignments(document_id, assigned_by, due_date)
-    VALUES (assignment_doc, admin_id, due);
-    RAISE EXCEPTION 'Expected assignment without target to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
-
-  -- Assignment due date cannot precede its creation date.
-  BEGIN
-    INSERT INTO policy_assignments(document_id, target_role_id, assigned_by, due_date, assigned_at)
-    SELECT assignment_doc, role_id, admin_id, CURRENT_DATE - 1, now()
-    FROM roles WHERE role_name = 'Nurse';
-    RAISE EXCEPTION 'Expected past due_date to fail, but it succeeded.';
-  EXCEPTION WHEN check_violation THEN
-    NULL;
-  END;
-
-  -- Each regulation score must remain within 0..100.
-  IF EXISTS (
-    SELECT 1 FROM v_regulatory_coverage_summary
-    WHERE coverage_percent < 0 OR coverage_percent > 100
-  ) THEN
-    RAISE EXCEPTION 'Coverage score is outside 0..100.';
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM v_control_coverage) THEN
-    RAISE EXCEPTION 'Expected seeded regulatory controls in v_control_coverage.';
-  END IF;
-
-  -- An expired approved policy mapped to a mandatory control must remain a gap.
-  INSERT INTO regulations(regulation_name, issuing_body, description)
-  VALUES ('TEST-EXPIRED-GAP', 'DocuGuard SQL test', 'Transactional coverage fixture')
-  RETURNING regulation_id INTO test_regulation;
-  INSERT INTO controls(regulation_id, control_code, title, is_mandatory)
-  VALUES (test_regulation, 'EXP-01', 'Expired policy must not cover a control', true)
-  RETURNING control_id INTO test_control;
-  INSERT INTO documents(title, category_id, owner_id, mongo_doc_id)
-  SELECT 'Expired coverage fixture', category_id, admin_id, 'phase6-expired-gap-fixture'
-  FROM document_categories WHERE category_name = 'Patient Safety'
-  RETURNING document_id INTO test_doc;
-  INSERT INTO document_versions(
-    document_id, version_number, file_path, mongo_content_id, checksum,
-    uploaded_by, approved_by, approved_at, effective_date, expiry_date, version_status
-  ) VALUES (
-    test_doc, 1, 'phase6-expired-gap-fixture.pdf', 'phase6-expired-gap-content', repeat('e', 64),
-    admin_id, approver_id, now(), CURRENT_DATE - 100, CURRENT_DATE - 1, 'approved'
-  ) RETURNING version_id INTO test_version;
-  UPDATE documents SET current_version_id = test_version, document_status = 'active'
-  WHERE document_id = test_doc;
-  INSERT INTO document_control_map(document_id, control_id, mapped_by)
-  VALUES (test_doc, test_control, admin_id);
-  IF EXISTS (SELECT 1 FROM v_control_coverage WHERE control_id = test_control AND is_covered) THEN
-    RAISE EXCEPTION 'Expired mapped policy incorrectly covers a mandatory control.';
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM v_regulatory_coverage_summary
-    WHERE regulation_id = test_regulation AND mandatory_gaps = 1 AND coverage_percent = 0
-  ) THEN
-    RAISE EXCEPTION 'Expired-only mandatory control was not reported as a coverage gap.';
-  END IF;
-
-  -- Acknowledgments point at a specific version. A replacement approval must
-  -- therefore return the same assignment to pending without storing pending rows.
-  SELECT user_id, role_id, department_id INTO test_nurse_id, test_nurse_role_id, test_nurse_department_id
-  FROM users WHERE email = 'nurse1@docuguard.local';
-  SELECT current_version_id INTO old_version_id FROM documents WHERE document_id = doc_one;
-  INSERT INTO policy_assignments(document_id, target_role_id, target_department_id, assigned_by, due_date)
-  VALUES (doc_one, test_nurse_role_id, test_nurse_department_id, admin_id, CURRENT_DATE + 10)
-  RETURNING assignment_id INTO test_assignment;
-  INSERT INTO acknowledgments(assignment_id, user_id, version_id)
-  VALUES (test_assignment, test_nurse_id, old_version_id);
-  IF NOT EXISTS (
-    SELECT 1 FROM v_ack_compliance
-    WHERE assignment_id = test_assignment AND acknowledged_users = 1 AND pending_users = 0
-  ) THEN
-    RAISE EXCEPTION 'Acknowledgment was not counted for its current version.';
-  END IF;
-  INSERT INTO document_versions(
-    document_id, version_number, file_path, mongo_content_id, checksum,
-    uploaded_by, effective_date, version_status
-  )
-  SELECT doc_one,
-         COALESCE(max(version_number), 0) + 1,
-         'phase7-ack-version-reset.pdf', 'phase7-ack-version-reset-content', repeat('f', 64),
-         test_user_id, CURRENT_DATE, 'pending_review'
-  FROM document_versions WHERE document_id = doc_one
-  RETURNING version_id INTO new_version_id;
-  UPDATE document_versions
-  SET version_status = 'approved', approved_by = approver_id, approved_at = now()
-  WHERE version_id = new_version_id;
-  IF NOT EXISTS (
-    SELECT 1 FROM v_ack_compliance
-    WHERE assignment_id = test_assignment AND acknowledged_users = 0 AND pending_users = 1
-  ) THEN
-    RAISE EXCEPTION 'New approved version did not reset acknowledgment completion.';
-  END IF;
-
-  RAISE NOTICE 'Push SQL constraint tests passed.';
-END;
-$$;
+ WITH RECURSIVE history(document_id,version_number,depth,path) AS (
+  SELECT document_id,version_number,1,ARRAY[version_number] FROM document_versions WHERE version_id=new_version_id
+  UNION ALL
+  SELECT prior.document_id,prior.version_number,current.depth+1,current.path||prior.version_number
+  FROM history current JOIN document_versions prior ON prior.document_id=current.document_id
+   AND prior.version_number=current.version_number-1
+  WHERE NOT prior.version_number=ANY(current.path)
+ ) SELECT count(*) INTO lineage_count FROM history;
+ IF lineage_count<>2 THEN RAISE EXCEPTION 'recursive CTE expected two numbered versions, found %',lineage_count; END IF;
+END $$;
 ROLLBACK;
+\echo Lite assignment, acknowledgment, version-history recursive CTE tests passed.

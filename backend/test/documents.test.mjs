@@ -31,7 +31,7 @@ const nextPdf = minimalPdf("DocuGuard updated policy test file");
 const recoveryPdf = minimalPdf("DocuGuard recovery policy test file");
 const policyTitle = "Automated Phase 3 document flow fixture";
 
-test("upload, access, approval and audit APIs preserve permissions and workflow", async () => {
+test("upload, access, maker-checker approval, Mongo compensation and download work", async () => {
   const uploader = request.agent(app);
   const reviewer = request.agent(app);
   const nurse = request.agent(app);
@@ -76,7 +76,7 @@ test("upload, access, approval and audit APIs preserve permissions and workflow"
   let detail = await uploader.get(`/api/documents/${documentId}`);
   assert.equal(detail.status, 200);
   assert.equal(detail.body.document.title, policyTitle);
-  assert.equal(typeof detail.body.ingestionPending, "boolean");
+  assert.equal("ingestionPending" in detail.body, false);
   assert.ok(detail.body.versions.length >= 1);
   const version = detail.body.versions[0];
   const download = await uploader.get(`/api/versions/${version.id}/file`);
@@ -142,8 +142,7 @@ test("upload, access, approval and audit APIs preserve permissions and workflow"
   const verification = await reviewer.post("/api/audit/verify");
   assert.equal(verification.status, 200);
   assert.equal(verification.body.check.result, "intact");
-  const history = await reviewer.get("/api/audit/logs");
-  assert.ok(history.body.integrityChecks.length >= 1);
+  assert.equal("integrityChecks" in (await reviewer.get("/api/audit/logs")).body, false);
 });
 
 afterAll(async () => {
