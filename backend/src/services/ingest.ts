@@ -64,7 +64,7 @@ export async function linkIngested(mongoContentId: string, mongoDocId: string, d
 }
 export async function deleteIngested(mongoContentId: string): Promise<void> {
   await mongoClient.connect();
-  await mongoClient.db(env.mongoDb).collection("document_contents").deleteOne({ _id: mongoContentId });
+  await mongoClient.db(env.mongoDb).collection<MongoContentDocument>("document_contents").deleteOne({ _id: mongoContentId });
 }
 /** Remove content left behind if its compensating delete failed after SQL rollback. */
 export async function sweepOrphanedIngestions(): Promise<number> {
