@@ -11,7 +11,7 @@ const mongoUri = process.env.MONGO_URI;
 const mongoDbName = process.env.MONGO_DB;
 const pgConfig = {
   host: process.env.PG_HOST,
-  port: Number(process.env.PG_PORT ?? 5433),
+  port: Number(process.env.PG_PORT ?? 55432),
   database: process.env.PG_DATABASE,
   user: process.env.PG_USER,
   password: process.env.PG_PASSWORD,
@@ -79,7 +79,6 @@ try {
   await mongo.connect();
   const db = mongo.db(mongoDbName);
   const contents = db.collection('document_contents');
-  const chunksCollection = db.collection('document_chunks');
 
   for (const policy of policyFiles) {
     const filePath = resolve(process.cwd(), 'docs', 'demo-policies', policy.file);
@@ -97,7 +96,6 @@ try {
       throw new Error(`No matching SQL document/version found for ${policy.file}. Run npm run db:apply first.`);
     }
     const { document_id: documentId, version_id: versionId, version_number: versionNumber } = sqlResult.rows[0];
-    const chunkTexts = splitIntoChunks(text);
     const sections = extractSections(text);
     const now = new Date();
     const contentDoc = {
@@ -121,23 +119,11 @@ try {
       versionNumber
     };
     await contents.replaceOne({ _id: policy.contentId }, contentDoc, { upsert: true });
-    await chunksCollection.deleteMany({ versionId });
-    if (chunkTexts.length) {
-      await chunksCollection.insertMany(chunkTexts.map((chunkText, chunkIndex) => ({
-        _id: `${policy.mongoDocId}-v${versionNumber}-chunk-${chunkIndex}`,
-        versionId,
-        documentId,
-        chunkIndex,
-        heading: sections.at(-1)?.heading ?? title,
-        page: 1,
-        text: chunkText,
-        tokenCount: chunkText.split(/\s+/).filter(Boolean).length
-      })));
-    }
-    console.log(`Seeded ${policy.file}: ${chunkTexts.length} MongoDB chunk(s).`);
+    console.log(`Seeded ${policy.file} into MongoDB document_contents.`);
   }
-  console.log('Synthetic policy content seeded. Run npm run db:embeddings to create local vectors.');
+  console.log('Synthetic policy content seeded.');
 } finally {
   await pg.end();
   await mongo.close();
 }
+
