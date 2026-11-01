@@ -19,4 +19,5 @@ This maps the supplied 50-mark rubric to the simplified target. The lite impleme
 | Documentation and Git/GitHub | 2 | README, architecture/schema/query/testing/demo docs and local Git history. No remote will be configured by this agent. |
 | Originality/contribution/modification/viva | 4 | Break-glass transaction, hash-chain audit and versioned acknowledgments; `OWNERSHIP.md`, student commits and live explanation. |
 
-The rubric's NoSQL category can be evidenced through MongoDB. The separate vector/retrieval implementation is not part of the lite feature plan. The simplified project still needs the instructor's acceptance of this substitution.
+MongoDB CRUD and aggregation provide the NoSQL evidence. The instructor should confirm whether that satisfies the rubric category.
+

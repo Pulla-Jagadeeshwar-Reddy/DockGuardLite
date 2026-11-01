@@ -5,7 +5,7 @@
 **Review interval:** Illustrative only
 
 ## Purpose
-This fictional schedule demonstrates how conflicting retention statements appear in policy search. The seven-year period below is invented for this database course and is not legal or operational guidance.
+This fictional schedule is one side of an intentionally conflicting retention example for the database course. The seven-year period below is invented and is not legal or operational guidance.
 
 ## Illustrative retention statement
 This example says that selected administrative record classes are retained for seven years after the locally defined closure event, then reviewed for secure disposition. The period is a deliberately synthetic value and must never be used to make a real retention decision.

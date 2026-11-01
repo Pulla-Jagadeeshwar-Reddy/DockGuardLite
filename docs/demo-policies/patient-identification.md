@@ -20,5 +20,5 @@ Near misses and identification errors should be reported through the facility's 
 ## Training and acknowledgment
 Assigned staff must read the currently approved policy and record acknowledgment. Acknowledgment is version-specific and does not replace practical training or supervision.
 
-## Search terms
+## Key terms
 patient identification, two identifiers, specimen labeling, emergency department, handoff, patient safety, identity discrepancy

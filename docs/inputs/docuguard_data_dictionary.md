@@ -1,6 +1,6 @@
 # DocuGuard Lite — Data Dictionary
 
-This dictionary describes the 11 relational entities in `docuguard_er_diagram.mermaid`. It records SQL types, keys, nullability, checks, defaults, and referential actions. `DOCUMENT_VERSIONS.vector_id` is retained here because the authoritative Mermaid supplied for this project includes it; this conflicts with the prose instruction to drop it and is awaiting a design decision. No lite application behavior is planned around that field unless the target model is clarified.
+This dictionary describes the 11 relational entities in `docuguard_er_diagram.mermaid`. It records SQL types, keys, nullability, checks, defaults, and referential actions.
 
 ## DEPARTMENTS
 | Column | SQL type | Constraints |
@@ -58,7 +58,6 @@ This dictionary describes the 11 relational entities in `docuguard_er_diagram.me
 | version_number | INT | NOT NULL, CHECK > 0, UNIQUE with document_id |
 | file_path | VARCHAR(500) | NOT NULL |
 | mongo_content_id | VARCHAR(64) | NOT NULL, UNIQUE |
-| vector_id | VARCHAR(64) | NULL allowed, UNIQUE; retained because present in the supplied authoritative Mermaid; see ambiguity above |
 | checksum | VARCHAR(128) | NOT NULL |
 | uploaded_by | INT | NOT NULL, FK USERS ON DELETE RESTRICT |
 | approved_by | INT | NULL until approval, FK USERS ON DELETE RESTRICT, CHECK differs from uploaded_by |

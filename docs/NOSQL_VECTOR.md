@@ -1,10 +1,10 @@
-# MongoDB Content Store
+# MongoDB content storage
 
-The lite application uses MongoDB as a document-content store alongside PostgreSQL. PostgreSQL owns users, permissions, document/version state, acknowledgments, overrides and audit logs. MongoDB stores extracted document content and flexible extraction metadata. Mongo records are references to relational document/version ids; they are never authorization claims.
+MongoDB stores extracted policy text and flexible extraction metadata. PostgreSQL owns users, role-based document grants, document/version state, assignments, acknowledgments, overrides and access logs. Mongo records are never authorization claims.
 
 ## Collection: `document_contents`
 
-One record represents the extracted content of one uploaded version. Example shape:
+One record represents one uploaded version's extracted content:
 
 ```javascript
 {
@@ -19,31 +19,25 @@ One record represents the extracted content of one uploaded version. Example sha
   pageCount: 4,
   pages: [{ n: 1, text: "..." }],
   sections: [{ heading: "Hand hygiene", level: 2, pageStart: 1, lineStart: 4 }],
-  extracted: {
-    keywords: ["hand hygiene", "clinical staff"],
-    wordCount: 920,
-    language: "en",
-    tables: [],
-    datesMentioned: []
-  },
+  extracted: { keywords: ["hand", "hygiene"], wordCount: 920, language: "en", tables: [], datesMentioned: [] },
   createdAt: ISODate("2026-11-01T00:00:00Z")
 }
 ```
 
-Nested page/section/extraction fields can vary without creating a large set of optional relational columns. PostgreSQL stores the version's `mongo_content_id` and remains authoritative for permissions and lifecycle.
+Nested page, section and extraction fields vary without creating optional relational columns. PostgreSQL stores each version's `mongo_content_id` and remains authoritative for access and lifecycle.
 
 ## Indexes and CRUD lifecycle
 
-`database/mongo/indexes.js` creates a unique partial index for linked version ids plus indexes for document/category, extracted keywords, and creation time.
+`database/mongo/indexes.js` creates a unique partial index for linked version ids, plus indexes for document/category, extracted keywords, category and creation time.
 
 - **Create:** ingestion extracts PDF/DOCX text and inserts a content record.
-- **Read:** a permitted document/version request resolves its Mongo content id through PostgreSQL, then reads the matching content record.
-- **Update:** after PostgreSQL assigns ids, ingestion links the Mongo record to document and version ids.
-- **Delete:** failed relational writes trigger compensating deletion; an orphan sweep deletes old unlinked content.
-- **Aggregate:** an Admin-only summary may group policy counts, pages and extracted word counts by category and show frequent extracted terms. The endpoint must derive eligible version ids from PostgreSQL first.
+- **Read:** an authorized version request resolves its content id through PostgreSQL, then reads the matching Mongo record.
+- **Update:** after PostgreSQL assigns ids, ingestion links the record to its document and version.
+- **Delete:** failed SQL writes trigger compensating deletion; an orphan sweeper deletes old unlinked content.
+- **Aggregate:** an Admin-only summary groups eligible policy counts, pages and extracted word counts by category and ranks extracted terms. Express obtains eligible current version ids from PostgreSQL before Mongo aggregation.
 
-## Document extraction limits
+The aggregation demonstrates `$match`, `$facet`, `$unwind`, `$group`, `$sort` and `$limit`. It returns descriptive summaries, not policy answers.
 
-PDF and DOCX text extraction is local. Scanned-image OCR is not supported. Demo policy content is fictional. MongoDB content supports browsing and summaries; it does not generate policy answers.
+## Extraction limits
 
-
+PDF and DOCX text extraction is local. Scanned-image OCR is not supported. Demo policies are fictional.

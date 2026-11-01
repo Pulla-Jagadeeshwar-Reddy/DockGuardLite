@@ -1,5 +1,8 @@
+name: docuguard-lite
+
 services:
   postgres:
+    container_name: docuguard-lite-postgres
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
@@ -8,9 +11,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
       # Keep the host port distinct from common local PostgreSQL installs.
-      - "5433:5432"
+      - "55432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - docuguard_lite_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -18,15 +21,16 @@ services:
       retries: 20
 
   mongo:
+    container_name: docuguard-lite-mongo
     image: mongo:7
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME in .env}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
-      - mongo_data:/data/db
+      - docuguard_lite_mongo_data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
@@ -34,5 +38,7 @@ services:
       retries: 20
 
 volumes:
-  postgres_data:
-  mongo_data:
+  docuguard_lite_postgres_data:
+    name: docuguard_lite_postgres_data
+  docuguard_lite_mongo_data:
+    name: docuguard_lite_mongo_data

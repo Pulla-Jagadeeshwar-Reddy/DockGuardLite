@@ -5,7 +5,7 @@
 **Review interval:** Illustrative only
 
 ## Purpose
-This fictional schedule deliberately conflicts with the seven-year example to demonstrate version-aware search and compliance analysis. The ten-year period is invented for this database course and is not legal or operational guidance.
+This fictional schedule deliberately conflicts with the seven-year example. The ten-year period is invented for this database course and is not legal or operational guidance.
 
 ## Illustrative retention statement
 This example says that selected administrative record classes are retained for ten years after the locally defined closure event, then reviewed for secure disposition. This synthetic value conflicts with the separate seven-year example and must not be treated as an approved requirement.

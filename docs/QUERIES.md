@@ -121,4 +121,5 @@ The window function compares each event with the prior event for that user witho
 ]
 ```
 
-The API should first obtain accessible current version ids from PostgreSQL and filter the Mongo pipeline by them. This keeps authorization in the relational system.
+The Admin API first obtains current approved version ids from PostgreSQL and filters the Mongo pipeline by them. This keeps document lifecycle eligibility in the relational system.
+

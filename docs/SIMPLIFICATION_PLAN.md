@@ -47,10 +47,10 @@ The list below names the source dependencies found by searching SQL, backend, fr
 
 | Rubric item | Impact of the target change | Smallest evidence plan using allowed entities |
 |---|---|---|
-| ER diagram (2) | None; the new model has 11 entities. | Present the Mermaid and Chen image. Resolve the `vector_id` mismatch below before final DDL. |
+| ER diagram (2) | None; the corrected target has 11 entities. | Present the corrected Mermaid and Chen image. |
 | Relational schema (3) | Narrower design. | Explain the 11 kept relations, keys, circular version pointer, FKs and constraints in `RELATIONAL_SCHEMA.md`. |
 | SQL DDL (4) | Fewer relations and indexes. | Keep visible CREATE/ALTER, checks, unique/FKs, triggers and runtime grants for the 11 entities. |
-| NoSQL/vector creation (4) | Mongo remains; vector storage is outside the allowed relational model. | Create MongoDB 7 database/collection/indexes for content. Risk: instructor may expect a vector store specifically; latest user rubric says NoSQL/Vector, so MongoDB may satisfy the NoSQL alternative. Confirm if vector storage is mandatory. |
+| NoSQL/vector creation (4) | Mongo remains; vector storage is outside the approved schema and scope. | Create MongoDB 7 database/collection/indexes for content. The instructor may still interpret the rubric as requiring a vector store; this is an external grading risk and will not change the approved schema. |
 | Technology justification (1) | Remove justification for retrieval. | Justify PostgreSQL for relational workflow/integrity and MongoDB for variable-shaped extracted document content. |
 | DML (4) | No loss of core lifecycle. | Seed unchanged personnel plus synthetic policies; demonstrate relational CRUD and Mongo content CRUD/compensation. |
 | Nested/correlated/recursive/join queries (4) | Dependency-graph recursive query is lost with `DOCUMENT_REFERENCES`. | Use the smallest replacement: recursive CTE walks prior `DOCUMENT_VERSIONS` by same `document_id` and descending `version_number`; add the CTE in `QUERIES.md`. Also show permission `EXISTS`, acknowledgment anti-join, joins, aggregation and HAVING. Version recursion is less substantive than a graph and needs instructor acceptance. |
@@ -70,16 +70,14 @@ The list below names the source dependencies found by searching SQL, backend, fr
 4. **MongoDB aggregation:** preserve `document_contents` metadata and run category/page/word/term summaries. API first obtains eligible version IDs from PostgreSQL; aggregation uses `$match`, `$facet`, `$unwind`, `$group`, and `$sort`.
 5. **Audit verification:** preserve computation and return an ephemeral result only, if approved. Do not add replacement persistence because no such entity exists in the target model.
 
-## 5. Open questions for the owner — approval needed before Phase 4
+## 5. Owner decisions
 
-1. **Authoritative `vector_id` conflict:** the pasted Mermaid explicitly includes `DOCUMENT_VERSIONS.vector_id`; prose says it is the one column to drop. Under your precedence rule I kept it in the copied Mermaid/data dictionary, though it has no active Lite use and the Chen image does not show it. Should the Mermaid be corrected to remove it, or should the field remain nullable/unique? Please resolve the target model before SQL changes.
-2. **Audit verification:** approve a Verify endpoint that returns integrity result and first broken id without saving a history row, while keeping the audit page's log list?
-3. **Recursive CTE:** approve version-history recursion as the smallest no-new-table replacement for recursive SQL rubric evidence, understanding it is weaker than dependency-graph traversal?
-4. **MongoDB aggregation:** approve retaining an Admin-only content-summary endpoint/widget (category counts, pages/word counts, frequent extracted terms), with version eligibility obtained from PostgreSQL?
-5. **Role/document-grant semantics:** approve role-name route guards (Admin-only user management/audit review; Doctor/Nurse emergency request) plus `DOCUMENT_PERMISSIONS` for per-document read/write/approve access? The DB/API must still reject unauthorized document reads, not rely on hidden UI links.
-6. **NoSQL rubric risk:** is MongoDB sufficient for the instructor's “NoSQL/Vector” category, or is vector storage specifically required? A vector feature would conflict with removing the vector entity and is not planned without your approval.
-7. **Side-by-side ports:** approve PostgreSQL `55432`, MongoDB `27018`, API `4010`, frontend `3010`; Compose project/volume/database names use `docuguard-lite` / `docuguard_lite`.
+The owner approved the plan, with these clarifications: correct the Mermaid/dictionary/schema to omit the removed version reference column; retain audit verification without persistence; use a recursive CTE over existing `document_id` and `version_number` only; retain Mongo content aggregation; add no tables or columns; and apply the remaining plan decisions including isolated Lite ports and names. The only remaining uncertainty is whether the instructor accepts MongoDB-only evidence for the rubric category; no owner action or schema addition is pending.
+
+## Owner decisions (approved for Phase 4)
+
+The plan gate is complete. Phase 4 implementation is in progress in the Lite repository only.
 
 ## Approval gate
 
-Phase 0 inspection, Phase 1 separate-repo import, and Phase 2 documentation work are complete. No SQL, backend, frontend, package, Compose or `.env.example` simplification has been started. Phase 4 must not start until you review this plan and answer the open questions or explicitly approve the stated defaults.
+Phase 0 inspection, Phase 1 separate-repo import, and Phase 2 documentation work are complete. Phase 3 is approved. Phase 4 implementation is in progress in the Lite repository only.

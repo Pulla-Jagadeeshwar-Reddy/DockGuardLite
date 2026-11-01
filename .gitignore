@@ -14,8 +14,6 @@ node_modules/
 dist/
 coverage/
 **/*.tsbuildinfo
-!frontend/src/app/(protected)/compliance/coverage/
-!frontend/src/app/(protected)/compliance/coverage/page.tsx
 uploads/**
 !uploads/.gitkeep
 *.log

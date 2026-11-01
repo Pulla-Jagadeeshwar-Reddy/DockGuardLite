@@ -16,5 +16,5 @@ Keep hand-cleaning supplies available, follow product instructions, and report e
 ## Training and acknowledgment
 Assigned staff read the currently approved version and acknowledge that version in DocuGuard. Acknowledgment does not replace practical instruction or competency assessment.
 
-## Search terms
+## Key terms
 hand hygiene, hand cleaning, infection prevention, clinical staff, gloves, training

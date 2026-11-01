@@ -7,11 +7,13 @@ The purpose of this repository is to preserve the core policy-document workflow 
 - `PERMISSIONS` and `ROLE_PERMISSIONS`: fine-grained permission catalog/junction removed in favor of roles and per-document grants.
 - `NOTIFICATIONS`: message inbox removed; pending work is shown by direct queue and anti-join queries.
 - `SEARCH_LOGS`: search feature/log removed.
-- `AUDIT_INTEGRITY_CHECKS`: verification-history relation removed; a non-persisting verification result is proposed.
+- `AUDIT_INTEGRITY_CHECKS`: verification-history relation removed; verification returns a non-persisted result.
 - `REGULATIONS`, `CONTROLS`, `DOCUMENT_CONTROL_MAP`: regulatory coverage data and matrix removed.
 - `DOCUMENT_CHUNKS`: stored search chunks removed; MongoDB retains complete extracted version content.
 - `DOCUMENT_REFERENCES`: policy dependency edges and impact graph removed.
 - `SIMILAR_DOCUMENTS`: pair cache removed.
+
+The `DOCUMENT_VERSIONS.vector_id` column from the initially pasted model was also excluded after the owner corrected the target.
 
 ## Application capabilities excluded
 
@@ -19,4 +21,4 @@ Keyword/semantic/hybrid retrieval and vector indexing, related-policy results, t
 
 ## Schema ambiguity
 
-The task's Mermaid model includes `DOCUMENT_VERSIONS.vector_id`, while the prose instructs dropping it. Mermaid is declared authoritative. It is retained as a nullable unique field in the draft model, without Lite behavior, until the owner resolves the inconsistency at the Phase 3 gate.
+The initially supplied Mermaid included `DOCUMENT_VERSIONS.vector_id`. The owner corrected the model and approved dropping the field, so the Lite ER model, data dictionary and SQL omit it.

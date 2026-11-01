@@ -39,7 +39,7 @@ PostgreSQL is the source of truth for the 11 relational entities. MongoDB stores
 - Emergency access creates an expiring override and flagged audit row transactionally. Admin review is a direct queue query over overrides.
 - Scheduled expiry logic updates version state. It does not depend on a message inbox.
 - An Admin content summary can aggregate MongoDB content metadata using `$facet`, `$unwind` and `$group`; PostgreSQL remains the authorization source for selecting eligible versions.
-- Audit verification recomputes the chain and returns a result. Whether to keep the endpoint without persistent verification history is an approval question in `SIMPLIFICATION_PLAN.md`.
+- Audit verification recomputes the chain and returns a non-persisted result.
 
 ## Components
 
@@ -52,4 +52,4 @@ PostgreSQL is the source of truth for the 11 relational entities. MongoDB stores
 | `database/mongo/` | Content indexes, synthetic content seed and content analytics. |
 | `docker-compose.yml` | Side-by-side lite PostgreSQL and MongoDB services. |
 
-The repository is currently at the documentation and approval-plan stage; its inherited config and application code have not yet been simplified. Planned lite ports and names are documented in README and will be applied only after plan approval.
+The Lite environment uses isolated host ports and names from `.env.example` and `docker-compose.yml` so the full and Lite versions can run side by side.

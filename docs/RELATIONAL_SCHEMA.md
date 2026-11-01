@@ -1,6 +1,6 @@
 # DocuGuard Lite Relational Schema
 
-The lite target has the following 11 PostgreSQL entities. The attribute-level contract and ER relationships are in `inputs/docuguard_data_dictionary.md` and `inputs/docuguard_er_diagram.mermaid`.
+The lite target has the following 11 PostgreSQL entities. The attribute-level contract and ER relationships are in `docs/inputs/docuguard_data_dictionary.md` and `docs/inputs/docuguard_er_diagram.mermaid`.
 
 | Area | Relations |
 |---|---|
@@ -22,12 +22,12 @@ The lite target has the following 11 PostgreSQL entities. The attribute-level co
 
 DDL enforces role and status enumerations, required values, unique emails/names/version numbers/grants/acknowledgments, date ordering, maker-checker, assignment target presence, break-glass limits, reviewer/requester distinction, and foreign-key delete behavior. Pending acknowledgments are computed, not stored. Version approval and expiry are handled by triggers/functions. Access logs use a SHA-256 predecessor chain, immutable trigger, and restricted runtime grants.
 
-`DOCUMENT_VERSIONS.vector_id` appears in the Mermaid included with the task, although the prose explicitly says to drop it. Mermaid has precedence under the user's rule, so this schema guide records it as retained pending clarification. The lite design has no planned operation that writes or reads that nullable unique field.
-
+The corrected simplified model omits 
 ## Views, functions and indexes planned
 
 Views will summarize document status, active documents expiring soon, access activity, emergency review queue, acknowledgment completion, and acknowledgment completion by department. Functions will cover accessible document ids, audit hash calculation/verification, override expiry, and version expiry. Triggers will maintain updated timestamps, legal version transitions/current version, append-only hash logs, and acknowledgment behavior only where it does not require removed storage. Indexes will support owner/category/status, active role grants, expiry, access history, active overrides, assignment/ack joins, and audit sequence.
 
 ## Migration mapping
 
-The existing numbered migration runner will be retained, with DDL rewritten to the lite set after approval: core schema, search/compliance schema removed or folded/emptied as needed, circular-FK ALTER, indexes, functions, triggers, views, seeds, runtime role, checksum migration, and drop/test scripts. Exact object inventory and change mapping are in `SIMPLIFICATION_PLAN.md`.
+The existing numbered migration runner will be retained, with DDL is split between core/reading schema, circular-FK ALTER, indexes, functions, triggers, views, seeds, runtime role and checksum migration. Exact object inventory and change mapping are in `SIMPLIFICATION_PLAN.md`.
+

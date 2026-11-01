@@ -20,5 +20,5 @@ Relevant clinical staff must read the currently approved version and record ackn
 ## Review and ownership
 The Infection Prevention Team should review this policy after a significant incident, a relevant guideline change, or at the scheduled review date. The document owner must ensure that superseded copies are not used.
 
-## Search terms
+## Key terms
 standard precautions, sharps injury, hand hygiene, PPE, exposure, infection prevention, incident reporting

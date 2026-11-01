@@ -1,27 +1,31 @@
 # DocuGuard Lite
 
-A simplified, local-first healthcare policy workflow for the university DBMS project. This repository is separate from the full DocuGuard archive. It is currently at the documentation/approval-plan stage; the inherited application and Docker files are not yet the side-by-side Lite configuration.
+A smaller local healthcare policy workflow for a university DBMS project. This is a separate repository; the full DocuGuard repository remains an untouched archive.
 
-## Planned local setup (after implementation)
+## Prerequisites
 
-Prerequisites: Node.js 22, npm, Git and Docker Desktop with Compose.
+- Node.js 22 and npm
+- Docker Desktop with Docker Compose
+- Ports 55432, 27018, 4010 and 3010 available
 
-The Lite environment will use an isolated Compose project named `docuguard-lite`, PostgreSQL database `docuguard_lite`, MongoDB database `docuguard_lite`, PostgreSQL host port `55432`, MongoDB host port `27018`, API port `4010` and frontend port `3010`. These values are targets and will be applied to Compose, `.env.example`, backend and frontend config only after Phase 3 approval. They keep Lite separate from the full app's usual ports and data volumes.
+## Local setup
 
-Once implementation is complete, the intended workflow is:
+1. Copy `.env.example` to `.env`; set local PostgreSQL/Mongo passwords and a random JWT secret of at least 32 characters.
+2. Start the isolated databases: `docker compose up -d`.
+3. Install packages: `npm install`.
+4. Apply PostgreSQL schema and demo relational data: `npm run db:rebuild` (this resets only Compose database `docuguard_lite`; do not change its `.env` database name).
+5. Configure the runtime role: `npm run db:auth`.
+6. Create Mongo indexes and seed extracted content: `npm run db:mongo:indexes` then `npm run db:mongo:seed`.
+7. Start Express and Next.js: `npm run dev`.
+8. Open `http://localhost:3010/login`; health is `http://localhost:4010/health`.
 
-1. Copy `.env.example` to `.env` and set local passwords/JWT secret.
-2. `docker compose -p docuguard-lite up -d`
-3. `npm install`
-4. Apply the Lite PostgreSQL migrations and MongoDB indexes/seed using the documented commands.
-5. `npm run dev`
-6. Open `http://localhost:3010/login`; API health will use `http://localhost:4010/health`.
+Docker Compose uses project `docuguard-lite`, explicit containers and volumes, PostgreSQL host port `55432`, and MongoDB host port `27018`. The API and frontend use `4010` and `3010`. These are separate from the full project's default ports and volumes. The Lite Mongo URI and PostgreSQL host connection are in `.env.example`.
 
-Do not use the inherited `db:rebuild` command until the Lite scripts explicitly target the isolated `_lite` database. It can destroy the selected schema. Use only disposable databases for tests.
+For an isolated disposable database test, use `npm run db:rebuild-test`. It must never point at the full project's databases. Run `npm run lint` and `npm run build` for static checks.
 
 ## Demo accounts
 
-The full snapshot contains synthetic seeded Admin, Doctor, Nurse and Staff accounts. The Lite seed must preserve the same people, roles and departments. After the Lite seed is implemented, use the synthetic credentials in the table below (copied from the prior demo seed); never use these for real services.
+These are synthetic accounts inherited from the project seed; passwords are throwaway demo values stored in PostgreSQL as bcrypt hashes.
 
 | Role | Email | Demo password |
 |---|---|---|
@@ -34,16 +38,14 @@ The full snapshot contains synthetic seeded Admin, Doctor, Nurse and Staff accou
 | Staff | `staff1@docuguard.local` | `DG-Demo-Staff-01!` |
 | Staff | `staff2@docuguard.local` | `DG-Demo-Staff-02!` |
 
-## Security and data
-
-Only `.env.example` belongs in Git. `.env`, Docker volumes, uploads, dependency directories and build output are ignored/excluded. Never upload real patient data. The supplied policy files are synthetic examples.
-
 ## Documentation
 
 - `docs/ARCHITECTURE.md` — components and request flow.
-- `docs/RELATIONAL_SCHEMA.md` and `docs/inputs/` — ER/schema contract.
-- `docs/QUERIES.md` — educational query examples.
-- `docs/NOSQL_VECTOR.md` — Mongo content model.
-- `docs/RUBRIC_CHECKLIST.md`, `docs/OWNERSHIP.md`, `docs/DEMO_GUIDE.md` — presentation guidance.
-- `docs/TESTING.md` — currently empty verification record.
-- `docs/SIMPLIFICATION_PLAN.md` — inventory, rubric impact, and approval gate.
+- `docs/RELATIONAL_SCHEMA.md` and `docs/inputs/` — ER model and database constraints.
+- `docs/QUERIES.md` — educational SQL/Mongo examples.
+- `docs/NOSQL_VECTOR.md` — MongoDB content model and aggregation.
+- `docs/RUBRIC_CHECKLIST.md`, `docs/OWNERSHIP.md`, `docs/DEMO_GUIDE.md` — presentation evidence.
+- `docs/TESTING.md` — verification results, updated only after actual runs.
+- `docs/SIMPLIFICATION.md` and `docs/SIMPLIFICATION_PLAN.md` — change rationale and impact record.
+
+All policies and users are synthetic. Do not upload patient data. `.env`, local uploads, Docker volumes and build output are ignored and must not be committed.

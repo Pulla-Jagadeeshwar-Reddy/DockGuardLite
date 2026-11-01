@@ -69,7 +69,6 @@ erDiagram
         int version_number UK "unique together with document_id"
         string file_path
         string mongo_content_id UK "reference into MongoDB content store"
-        string vector_id UK "nullable identifier listed by the authoritative Mermaid model"
         string checksum
         int uploaded_by FK
         int approved_by FK "nullable, must differ from uploaded_by (maker-checker)"

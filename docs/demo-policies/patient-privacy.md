@@ -20,5 +20,5 @@ Managers and system owners should review access when job responsibilities change
 ## Training and acknowledgment
 Assigned personnel must read the current approved version and acknowledge it in DocuGuard. New versions create a new acknowledgment requirement for the version assigned by the system.
 
-## Search terms
+## Key terms
 patient privacy, personal data, minimum necessary, authorized access, disclosure, access review, privacy incident

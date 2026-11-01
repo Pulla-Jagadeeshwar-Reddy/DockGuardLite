@@ -7,7 +7,7 @@
 ## Purpose
 This fictional policy describes a communication framework for facility incidents. It does not define clinical response steps or replace local emergency plans.
 
-## Activation and notification
+## Activation and staff communication
 Use the facility's approved channel and terminology to notify the designated response team. Share the location, type of incident, and known safety concerns without speculation. If the primary communication system is unavailable, use the documented backup channel.
 
 ## Coordination

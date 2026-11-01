@@ -53,8 +53,6 @@ try {
   # Index setup creates empty collection namespaces; this works before any seed documents exist.
   Invoke-Checked 'npm.cmd' @('run', 'db:mongo:indexes')
   Invoke-Checked 'npm.cmd' @('run', 'db:mongo:seed')
-  Invoke-Checked 'npm.cmd' @('run', 'db:embeddings')
-  Invoke-Checked 'npm.cmd' @('run', 'model:check')
   Invoke-Checked 'npm.cmd' @('run', 'test', '--workspace', 'backend')
   Invoke-Checked 'powershell.exe' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'run_all.ps1'), '-TestOnly', '-DatabaseName', $database)
 
