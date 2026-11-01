@@ -6,10 +6,9 @@ import multer from "multer";
 import { z } from "zod";
 import { pgPool } from "../config/databases.js";
 import { env } from "../config/env.js";
-import { requireAuth, requirePermission, requireRole } from "../middleware/auth.js";
-import { deleteIngested, ingestFile, ingestionIsTemporaryStub, linkIngested, queueEmbedding } from "../services/ingest.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
+import { deleteIngested, ingestFile, linkIngested } from "../services/ingest.js";
 import { logAccess } from "../services/audit.js";
-import { rebuildSimilarDocuments } from "../services/similar-documents.js";
 
 const documentsRouter = Router();
 const versionsRouter = Router();
@@ -179,7 +178,6 @@ async function saveUpload(request: UploadRequest, response: Response, next: Next
 
     let documentId = existingDocumentId;
     let versionNumber = 1;
-    let embeddingQueued = false;
     if (documentId === null) {
       const created = await client.query(
         `INSERT INTO documents(title, category_id, owner_id, mongo_doc_id)
@@ -220,17 +218,13 @@ async function saveUpload(request: UploadRequest, response: Response, next: Next
     await logAccess(client, { userId: actor.id, documentId, versionId: version.rows[0].version_id, action: "upload", ip: request.ip ?? null });
     await client.query("COMMIT");
     transactionStarted = false;
-    try { await queueEmbedding(version.rows[0].version_id); embeddingQueued = true; }
-    catch { console.warn("DocuGuard embedding queue unavailable after committed upload"); }
-
     response.status(201).json({
       documentId,
       title: existingDocumentId === null ? parsed.data.title : undefined,
       versionId: version.rows[0].version_id,
       versionNumber: version.rows[0].version_number,
       versionStatus: version.rows[0].version_status,
-      checksum,
-      ingestionPending: ingestionIsTemporaryStub || ingested.chunkCount === 0 || !embeddingQueued
+      checksum
     });
   } catch (error) {
     if (client && transactionStarted) {
@@ -262,16 +256,7 @@ documentsRouter.get("/:id", async (request, response, next) => {
               d.created_at AS "createdAt", d.updated_at AS "updatedAt",
               c.category_id AS "categoryId", c.category_name AS category,
               owner.full_name AS owner, d.current_version_id AS "currentVersionId",
-              COALESCE(d.current_version_id, (SELECT v.version_id FROM document_versions v WHERE v.document_id = d.document_id ORDER BY v.version_number DESC LIMIT 1)) AS "accessVersionId",
-              EXISTS (
-                SELECT 1 FROM document_versions ingest_version
-                WHERE ingest_version.version_id = COALESCE(
-                  d.current_version_id,
-                  (SELECT v.version_id FROM document_versions v WHERE v.document_id = d.document_id ORDER BY v.version_number DESC LIMIT 1)
-                ) AND NOT EXISTS (
-                  SELECT 1 FROM document_chunks indexed_chunk WHERE indexed_chunk.version_id = ingest_version.version_id
-                )
-              ) AS "ingestionPending"
+              COALESCE(d.current_version_id, (SELECT v.version_id FROM document_versions v WHERE v.document_id = d.document_id ORDER BY v.version_number DESC LIMIT 1)) AS "accessVersionId"
        FROM documents d
        JOIN document_categories c ON c.category_id = d.category_id
        JOIN users owner ON owner.user_id = d.owner_id
@@ -295,10 +280,8 @@ documentsRouter.get("/:id", async (request, response, next) => {
     );
     await logAccess(client, { userId: request.user!.id, documentId: id.data, versionId: document.accessVersionId, action: "view", ip: request.ip ?? null });
     await client.query("COMMIT");
-    const ingestionPending = document.ingestionPending;
     delete document.accessVersionId;
-    delete document.ingestionPending;
-    response.json({ document, versions: versions.rows, ingestionPending });
+    response.json({ document, versions: versions.rows });
   } catch (error) {
     try { await client.query("ROLLBACK"); } catch { /* Transaction may already be closed. */ }
     next(error);
@@ -315,7 +298,7 @@ documentsRouter.post("/:id/versions", requireRole("Admin", "Doctor"), upload.sin
   void saveUpload(request as UploadRequest, response, next, id.data);
 });
 
-documentsRouter.post("/versions/:versionId/approve", requirePermission("DOCUMENT_APPROVE"), async (request, response, next) => {
+documentsRouter.post("/versions/:versionId/approve", requireRole("Admin"), async (request, response, next) => {
   const id = idSchema.safeParse(request.params.versionId);
   if (!id.success) { response.status(400).json({ error: "Invalid version id" }); return; }
   const client = await pgPool.connect();
@@ -339,10 +322,6 @@ documentsRouter.post("/versions/:versionId/approve", requirePermission("DOCUMENT
     const approved = result.rows[0];
     await logAccess(client, { userId: request.user!.id, documentId: approved.document_id, versionId: approved.version_id, action: "approve", ip: request.ip ?? null });
     await client.query("COMMIT");
-    try { await queueEmbedding(approved.version_id); }
-    catch { console.warn("DocuGuard approved-version embedding refresh failed; retry by reprocessing the version"); }
-    try { await rebuildSimilarDocuments(); }
-    catch { console.warn("DocuGuard similarity refresh failed; it will retry on schedule"); }
     response.json({ versionId: approved.version_id, versionNumber: approved.version_number, status: approved.version_status });
   } catch (error) {
     try { await client.query("ROLLBACK"); } catch { /* Transaction may already be closed. */ }

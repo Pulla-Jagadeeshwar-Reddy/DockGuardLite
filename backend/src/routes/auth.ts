@@ -73,7 +73,6 @@ router.get("/me", requireAuth, (request, response) => {
       roleId: user.roleId,
       role: user.role,
       departmentId: user.departmentId,
-      permissions: user.permissions
     }
   });
 });

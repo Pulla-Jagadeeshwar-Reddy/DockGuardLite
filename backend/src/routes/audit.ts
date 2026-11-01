@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { pgPool } from "../config/databases.js";
-import { requireAuth, requirePermission } from "../middleware/auth.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 const filterSchema = z.object({
@@ -14,7 +14,7 @@ const filterSchema = z.object({
   offset: z.coerce.number().int().min(0).default(0)
 }).strict();
 
-router.use(requireAuth, requirePermission("AUDIT_READ"));
+router.use(requireAuth, requireRole("Admin"));
 
 router.get("/logs", async (request, response, next) => {
   const parsed = filterSchema.safeParse(request.query);
@@ -36,7 +36,7 @@ router.get("/logs", async (request, response, next) => {
   if (filters.to !== undefined) addFilter("l.accessed_at <= ?::timestamptz", filters.to);
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   try {
-    const [logs, total, checks] = await Promise.all([
+    const [logs, total] = await Promise.all([
       pgPool.query(
         `SELECT l.log_id AS id, l.user_id AS "userId", u.full_name AS user,
                 l.document_id AS "documentId", d.title AS document,
@@ -51,19 +51,13 @@ router.get("/logs", async (request, response, next) => {
          ORDER BY l.log_id DESC LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
         [...values, filters.limit, filters.offset]
       ),
-      pgPool.query(`SELECT count(*)::int AS count FROM access_logs l ${where}`, values),
-      pgPool.query(
-        `SELECT c.check_id AS id, c.run_at AS "runAt", c.rows_verified AS "rowsVerified",
-                c.result, c.first_broken_log_id AS "firstBrokenLogId", u.full_name AS "runBy"
-         FROM audit_integrity_checks c JOIN users u ON u.user_id = c.run_by
-         ORDER BY c.run_at DESC, c.check_id DESC LIMIT 10`
-      )
+      pgPool.query(`SELECT count(*)::int AS count FROM access_logs l ${where}`, values)
     ]);
-    response.json({ logs: logs.rows, total: total.rows[0].count, integrityChecks: checks.rows });
+    response.json({ logs: logs.rows, total: total.rows[0].count });
   } catch (error) { next(error); }
 });
 
-router.post("/verify", requirePermission("AUDIT_VERIFY"), async (request, response, next) => {
+router.post("/verify", async (_request, response, next) => {
   const client = await pgPool.connect();
   try {
     await client.query("BEGIN");
@@ -73,14 +67,8 @@ router.post("/verify", requirePermission("AUDIT_VERIFY"), async (request, respon
     const count = await client.query("SELECT count(*)::bigint AS rows_verified FROM access_logs");
     const firstBrokenLogId = integrity.rows[0].first_broken_log_id as number | null;
     const result = firstBrokenLogId === null ? "intact" : "tampered";
-    const saved = await client.query(
-      `INSERT INTO audit_integrity_checks(run_by, rows_verified, result, first_broken_log_id)
-       VALUES ($1, $2, $3, $4)
-       RETURNING check_id AS id, run_at AS "runAt", rows_verified AS "rowsVerified", result, first_broken_log_id AS "firstBrokenLogId"`,
-      [request.user!.id, count.rows[0].rows_verified, result, firstBrokenLogId]
-    );
     await client.query("COMMIT");
-    response.json({ check: saved.rows[0] });
+    response.json({ check: { rowsVerified: count.rows[0].rows_verified, result, firstBrokenLogId, verifiedAt: new Date().toISOString() } });
   } catch (error) {
     try { await client.query("ROLLBACK"); } catch { /* Transaction may already be closed. */ }
     next(error);

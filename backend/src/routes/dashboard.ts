@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { pgPool } from "../config/databases.js";
-import { requireAuth, requirePermission } from "../middleware/auth.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
-router.use(requireAuth, requirePermission("DASHBOARD_READ"));
+router.use(requireAuth);
 
 router.get("/", async (request, response, next) => {
   try {

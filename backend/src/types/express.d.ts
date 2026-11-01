@@ -8,7 +8,6 @@ declare global {
         roleId: number;
         role: string;
         departmentId: number | null;
-        permissions: string[];
       };
     }
   }

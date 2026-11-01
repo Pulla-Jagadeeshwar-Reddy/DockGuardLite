@@ -44,17 +44,12 @@ export async function requireAuth(request: Request, response: Response, next: Ne
       return;
     }
 
-    // Reload role and permissions so a suspended account or changed role takes effect immediately.
+    // Reload the role so suspended accounts and role changes take effect immediately.
     const result = await pgPool.query(
       `SELECT u.user_id, u.full_name, u.email, u.role_id, r.role_name,
-              u.department_id, u.account_status,
-              COALESCE(array_agg(p.permission_name) FILTER (WHERE p.permission_name IS NOT NULL), '{}') AS permissions
-       FROM users u
-       JOIN roles r ON r.role_id = u.role_id
-       LEFT JOIN role_permissions rp ON rp.role_id = r.role_id
-       LEFT JOIN permissions p ON p.permission_id = rp.permission_id
-       WHERE u.user_id = $1
-       GROUP BY u.user_id, u.full_name, u.email, u.role_id, r.role_name, u.department_id, u.account_status`,
+              u.department_id, u.account_status
+       FROM users u JOIN roles r ON r.role_id = u.role_id
+       WHERE u.user_id = $1`,
       [Number(payload.sub)]
     );
     const user = result.rows[0];
@@ -68,8 +63,7 @@ export async function requireAuth(request: Request, response: Response, next: Ne
       email: user.email,
       roleId: user.role_id,
       role: user.role_name,
-      departmentId: user.department_id,
-      permissions: user.permissions
+      departmentId: user.department_id
     };
     next();
   } catch (error) {
@@ -88,20 +82,6 @@ export function requireRole(...roles: string[]) {
       return;
     }
     if (!roles.includes(request.user.role)) {
-      response.status(403).json({ error: "Forbidden" });
-      return;
-    }
-    next();
-  };
-}
-
-export function requirePermission(permission: string) {
-  return (request: Request, response: Response, next: NextFunction) => {
-    if (!request.user) {
-      response.status(401).json({ error: "Authentication required" });
-      return;
-    }
-    if (!request.user.permissions.includes(permission)) {
       response.status(403).json({ error: "Forbidden" });
       return;
     }

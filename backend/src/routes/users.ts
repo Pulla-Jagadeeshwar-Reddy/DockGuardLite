@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { pgPool } from "../config/databases.js";
-import { requireAuth, requirePermission } from "../middleware/auth.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 const createSchema = z.object({
@@ -22,7 +22,7 @@ const updateSchema = z.object({
 }).strict().refine(value => Object.keys(value).length > 0, "At least one field is required");
 const idSchema = z.coerce.number().int().positive();
 
-router.use(requireAuth, requirePermission("USER_ADMIN"));
+router.use(requireAuth, requireRole("Admin"));
 
 router.get("/", async (request, response, next) => {
   try {

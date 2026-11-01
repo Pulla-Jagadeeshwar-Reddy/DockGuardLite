@@ -12,17 +12,17 @@ function required(name: string): string {
 }
 
 export const env = {
-  port: Number(process.env.BACKEND_PORT ?? 4000),
+  port: Number(process.env.BACKEND_PORT ?? 4010),
   pg: {
     host: required("PG_HOST"),
-    port: Number(process.env.PG_PORT ?? 5432),
+    port: Number(process.env.PG_PORT ?? 55432),
     database: required("PG_DATABASE"),
     user: required("PG_USER"),
     password: required("PG_PASSWORD")
   },
   mongoUri: required("MONGO_URI"),
   mongoDb: required("MONGO_DB"),
-  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+  frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3010",
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "1h",
   isProduction: process.env.NODE_ENV === "production",

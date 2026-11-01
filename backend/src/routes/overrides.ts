@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { pgPool } from "../config/databases.js";
-import { requireAuth, requirePermission, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 
 const router = Router();
 const requestSchema = z.object({
@@ -12,7 +12,7 @@ const requestSchema = z.object({
 const reviewSchema = z.object({ outcome: z.enum(["justified", "unjustified"]) }).strict();
 const idSchema = z.coerce.number().int().positive();
 
-router.post("/", requireAuth, requirePermission("BREAK_GLASS_REQUEST"), requireRole("Doctor", "Nurse"), async (request, response, next) => {
+router.post("/", requireAuth, requireRole("Doctor", "Nurse"), async (request, response, next) => {
   const parsed = requestSchema.safeParse(request.body);
   if (!parsed.success) {
     response.status(400).json({ error: "Enter a document id, a justification of at least 20 characters, and a duration from 1 to 24 hours" });
@@ -64,14 +64,6 @@ router.post("/", requireAuth, requirePermission("BREAK_GLASS_REQUEST"), requireR
        VALUES ($1, $2, $3, $4, 'view', true, $5)`,
       [request.user!.id, parsed.data.documentId, document.rows[0].current_version_id, override.rows[0].id, request.ip ?? null]
     );
-    await client.query(
-      `INSERT INTO notifications(user_id, document_id, notification_type, message)
-       SELECT admin.user_id, $1, 'break_glass_review',
-              format('Emergency access was requested by %s for policy "%s".', $2::text, $3::text)
-       FROM users AS admin JOIN roles AS role ON role.role_id = admin.role_id
-       WHERE role.role_name = 'Admin' AND admin.account_status = 'active'`,
-      [parsed.data.documentId, request.user!.fullName, document.rows[0].title]
-    );
     await client.query("COMMIT");
     response.status(201).json({ override: { ...override.rows[0], documentId: parsed.data.documentId } });
   } catch (error) {
@@ -80,7 +72,7 @@ router.post("/", requireAuth, requirePermission("BREAK_GLASS_REQUEST"), requireR
   } finally { client.release(); }
 });
 
-router.get("/pending", requireAuth, requirePermission("BREAK_GLASS_REVIEW"), requireRole("Admin"), async (_request, response, next) => {
+router.get("/pending", requireAuth, requireRole("Admin"), async (_request, response, next) => {
   try {
     const result = await pgPool.query(
       `SELECT q.override_id AS id, q.requester_id AS "requesterId",
@@ -94,7 +86,7 @@ router.get("/pending", requireAuth, requirePermission("BREAK_GLASS_REVIEW"), req
   } catch (error) { next(error); }
 });
 
-router.post("/:id/review", requireAuth, requirePermission("BREAK_GLASS_REVIEW"), requireRole("Admin"), async (request, response, next) => {
+router.post("/:id/review", requireAuth, requireRole("Admin"), async (request, response, next) => {
   const parsedId = idSchema.safeParse(request.params.id);
   const body = reviewSchema.safeParse(request.body);
   if (!parsedId.success || !body.success) {
