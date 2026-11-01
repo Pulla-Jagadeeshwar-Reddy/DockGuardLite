@@ -4,8 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 type AuditLog = { id: string; user: string; document: string; version: number | null; action: string; breakGlass: boolean; ip: string | null; accessedAt: string; previousHash: string; rowHash: string };
-type IntegrityCheck = { id: number; runAt: string; rowsVerified: string; result: "intact" | "tampered"; firstBrokenLogId: string | null; runBy: string };
-type AuditResponse = { logs: AuditLog[]; total: number; integrityChecks: IntegrityCheck[] };
+type IntegrityCheck = { rowsVerified: string; result: "intact" | "tampered"; firstBrokenLogId: string | null; verifiedAt: string };
+type AuditResponse = { logs: AuditLog[]; total: number };
 
 export default function AuditPage() {
   const [data, setData] = useState<AuditResponse | null>(null);
@@ -45,7 +45,6 @@ export default function AuditPage() {
       setResultMessage(result.check.result === "intact"
         ? `Integrity verified across ${result.check.rowsVerified} audit rows.`
         : `Tampering detected at log row ${result.check.firstBrokenLogId}.`);
-      await load();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Integrity verification failed"); }
     finally { setVerifying(false); }
   }
@@ -66,16 +65,6 @@ export default function AuditPage() {
       </form>
       {error && <p role="alert" style={{ color: "#a32929" }}>{error}</p>}
       {resultMessage && <p role="status" style={{ color: resultMessage.startsWith("Tampering") ? "#a32929" : "#18765f", fontWeight: 700 }}>{resultMessage}</p>}
-      <section style={panelStyle}>
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>Verification history</h2>
-        {!data || data.integrityChecks.length === 0 ? <p>No integrity checks have been run yet.</p> : <ul style={{ paddingLeft: 20 }}>
-          {data.integrityChecks.map(check => <li key={check.id} style={{ margin: "8px 0" }}>
-            <strong style={{ color: check.result === "intact" ? "#18765f" : "#a32929" }}>{check.result.toUpperCase()}</strong>
-            {` · ${check.rowsVerified} rows · ${new Date(check.runAt).toLocaleString()} · ${check.runBy}`}
-            {check.firstBrokenLogId && ` · first broken row ${check.firstBrokenLogId}`}
-          </li>)}
-        </ul>}
-      </section>
       <section style={{ ...panelStyle, marginTop: 18 }}>
         <h2 style={{ marginTop: 0, fontSize: 18 }}>Audit events <span style={{ color: "#6b7773", fontSize: 14, fontWeight: 400 }}>({data?.total ?? 0})</span></h2>
         {loading ? <p aria-live="polite">Loading audit events…</p> : !data || data.logs.length === 0 ? <p>No audit events match these filters.</p> : <div style={{ overflowX: "auto" }}>

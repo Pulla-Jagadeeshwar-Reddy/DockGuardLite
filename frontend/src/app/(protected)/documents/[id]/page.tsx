@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api, uploadWithProgress } from "@/lib/api";
-import { RelatedPolicies } from "@/components/related-policies";
 
 type Version = { id: number; versionNumber: number; status: string; uploadedAt: string; effectiveDate: string; expiryDate: string | null; uploadedBy: string; approvedBy: string | null; approvedAt: string | null };
 type DocumentDetail = { id: number; title: string; status: string; categoryId: number; category: string; owner: string; currentVersionId: number | null };
@@ -30,7 +29,6 @@ export default function DocumentDetailPage() {
   const router = useRouter();
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
-  const [ingestionPending, setIngestionPending] = useState(false);
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -40,10 +38,10 @@ export default function DocumentDetailPage() {
 
   async function load() {
     const [detail, session] = await Promise.all([
-      api<{ document: DocumentDetail; versions: Version[]; ingestionPending: boolean }>(`/documents/${params.id}`),
+      api<{ document: DocumentDetail; versions: Version[] }>(`/documents/${params.id}`),
       api<{ user: { role: string } }>("/auth/me")
     ]);
-    setDocument(detail.document); setVersions(detail.versions); setIngestionPending(detail.ingestionPending); setRole(session.user.role);
+    setDocument(detail.document); setVersions(detail.versions); setRole(session.user.role);
   }
 
   useEffect(() => { load().catch(caught => setError(caught instanceof Error ? caught.message : "Could not load document")); }, [params.id]);
@@ -82,11 +80,8 @@ export default function DocumentDetailPage() {
       <Link href="/documents" style={{ color: "#176c59" }}>← Documents</Link>
       <p style={{ color: "#18765f", fontWeight: 700, marginTop: 28 }}>{document.category.toUpperCase()}</p>
       <h1>{document.title}</h1>
-      {role === "Admin" && <p><Link href={`/documents/${document.id}/impact`} style={{ color: "#176c59", fontWeight: 700 }}>View dependency graph and impact →</Link></p>}
       <p style={{ color: "#5c6d68" }}>Owner: {document.owner} · Document status: {document.status}</p>
       {error && <p role="alert" style={{ color: "#a32929" }}>{error}</p>}{message && <p role="status" style={{ color: "#18765f" }}>{message}</p>}
-      {ingestionPending && <p role="status" style={{ ...panelStyle, color: "#6b5a1a" }}>The file is stored and versioned. Text extraction or vector indexing is still processing; search results will appear when it completes.</p>}
-      <RelatedPolicies documentId={document.id} />
       <div style={panelStyle}>
         <h2 style={{ marginTop: 0, fontSize: 18 }}>Version history</h2>
         {versions.length === 0 ? <p>No versions have been uploaded.</p> : <div style={{ overflowX: "auto" }}>

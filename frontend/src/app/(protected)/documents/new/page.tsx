@@ -9,7 +9,7 @@ import { z } from "zod";
 import { api, uploadWithProgress } from "@/lib/api";
 
 type Category = { id: number; name: string };
-type UploadResult = { documentId: number; versionId: number; ingestionPending: boolean };
+type UploadResult = { documentId: number; versionId: number; versionStatus: string };
 const uploadSchema = z.object({
   title: z.string().trim().min(1, "Enter a policy title").max(255),
   categoryId: z.string().min(1, "Choose a category"),

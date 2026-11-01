@@ -3,13 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0",
+    "dev": "next dev --hostname 0.0.0.0 --port 3010",
     "build": "next build --webpack",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.1",
-    "@xyflow/react": "^12.12.0",
     "next": "^16.4.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

@@ -52,7 +52,7 @@ export default function AcknowledgmentsAdminPage() {
     };
     try {
       await api("/assignments", { method: "POST", body: JSON.stringify(body) });
-      setMessage("Policy assigned. Eligible users received an acknowledgment notification.");
+      setMessage("Policy acknowledgment assignment created.");
       await load();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Assignment could not be created"); }
     finally { setSaving(false); }

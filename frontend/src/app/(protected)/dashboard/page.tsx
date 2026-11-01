@@ -12,14 +12,12 @@ type DashboardData = {
 };
 type KeywordAnalytics = { topKeywords: { _id: { category: string; keyword: string }; count: number }[] };
 type AcknowledgmentSummary = { assignments: { eligible_users: number; acknowledged_users: number }[] };
-type CoverageSummary = { regulations: { mandatoryControls: number; coveredMandatoryControls: number; mandatoryGaps: number }[] };
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [keywords, setKeywords] = useState<KeywordAnalytics | null>(null);
   const [acknowledgments, setAcknowledgments] = useState<AcknowledgmentSummary | null>(null);
-  const [coverage, setCoverage] = useState<CoverageSummary | null>(null);
 
   useEffect(() => {
     api<DashboardData>("/dashboard")
@@ -31,9 +29,8 @@ export default function DashboardPage() {
     api<{ user: { role: string } }>("/auth/me")
       .then(({ user }) => user.role === "Admin" ? Promise.all([
         api<KeywordAnalytics>("/analytics/keywords"),
-        api<AcknowledgmentSummary>("/compliance/acknowledgments"),
-        api<CoverageSummary>("/compliance/coverage")
-      ]).then(([keywordData, acknowledgmentData, coverageData]) => { setKeywords(keywordData); setAcknowledgments(acknowledgmentData); setCoverage(coverageData); }) : undefined)
+        api<AcknowledgmentSummary>("/compliance/acknowledgments")
+      ]).then(([keywordData, acknowledgmentData]) => { setKeywords(keywordData); setAcknowledgments(acknowledgmentData); }) : undefined)
       .catch(() => undefined);
   }, []);
 
@@ -105,21 +102,9 @@ export default function DashboardPage() {
           <strong>{percent}% complete</strong>
         </section>;
       })()}
-      {coverage && (() => {
-        const required = coverage.regulations.reduce((total, item) => total + Number(item.mandatoryControls), 0);
-        const covered = coverage.regulations.reduce((total, item) => total + Number(item.coveredMandatoryControls), 0);
-        const gaps = coverage.regulations.reduce((total, item) => total + Number(item.mandatoryGaps), 0);
-        const percent = required ? Math.round(100 * covered / required) : 0;
-        return <section style={{ ...cardStyle, marginTop: 18 }}>
-          <h2 style={{ marginTop: 0, fontSize: 18 }}>Regulatory coverage</h2>
-          <p style={{ color: "#5c6d68" }}>{covered} of {required} mandatory controls covered · {gaps} gaps.</p>
-          <progress value={percent} max={100} aria-label={`Mandatory control coverage ${percent}%`} style={{ width: "100%" }} />
-          <strong>{percent}% coverage</strong>
-        </section>;
-      })()}
       {keywords && <section style={{ ...cardStyle, marginTop: 18 }}>
-        <h2 style={{ marginTop: 0, fontSize: 18 }}>Frequently indexed policy terms</h2>
-        {keywords.topKeywords.length === 0 ? <p style={{ color: "#5c6d68" }}>No approved policy text is indexed yet.</p> :
+        <h2 style={{ marginTop: 0, fontSize: 18 }}>Common terms in approved policies</h2>
+        {keywords.topKeywords.length === 0 ? <p style={{ color: "#5c6d68" }}>No approved policy text is available yet.</p> :
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px 20px" }}>
             {keywords.topKeywords.slice(0, 8).map(item => <div key={`${item._id.category}-${item._id.keyword}`} style={{ display: "flex", justifyContent: "space-between", gap: 12, borderBottom: "1px solid #edf1ef", padding: "7px 0" }}>
               <span>{item._id.keyword} <small style={{ color: "#687872" }}>· {item._id.category}</small></span>
