@@ -1,27 +1,22 @@
-# Team Ownership
+# Team Ownership — DocuGuard Lite
 
-The implementation is divided into vertical feature slices so both students contribute to the database and application layers. Use the names **Pull** and **Push** in the demo and contribution history.
+Both students should make commits in their own identity and each should understand both SQL and application behavior. The proposed slices are vertical and can be adjusted by the team before implementation.
 
-## Pull
+## Member A
 
-- PostgreSQL core schema, constraints, triggers, views, indexes, seed, runtime role, and migration runner.
-- Authentication, RBAC, and user administration.
-- Document upload/version/approval workflows, access checks, and audit hash chain.
-- Expiry sweeper and notifications.
-- Dashboard status/expiry/activity widgets and document dependency graph/impact.
-- Break-glass request transaction and Admin review.
-- `ARCHITECTURE.md`, `RELATIONAL_SCHEMA.md`, `TESTING.md`, audit tamper rehearsal, and Pull-side demo/screenshot notes.
+- PostgreSQL core schema, circular FK migration, constraints, indexes, audit-chain functions/triggers and SQL tests.
+- Express authentication, role checks, user administration and document permissions.
+- Next.js login, user admin, document list/upload/detail and version approval pages.
 
-## Push
+## Member B
 
-- MongoDB schemas, content ingestion, extraction, chunking, embeddings, and search/similarity services.
-- Search, acknowledgment, regulatory coverage, and analytics database tables/views and application pages.
-- Synthetic policy/regulation seed content, `QUERIES.md`, `NOSQL_VECTOR.md`, `RUBRIC_CHECKLIST.md`, screenshots, and README polish.
+- PostgreSQL assignment/acknowledgment views, break-glass data constraints, seed and feature SQL tests.
+- MongoDB content collection/indexes, extraction, ingestion and compensation/orphan cleanup.
+- Express acknowledgments and emergency workflows; Next.js My Policies, acknowledgment, break-glass and review pages.
 
-## Joint responsibilities
+## Shared
 
-- Review and explain each other's database and application code.
-- Rehearse the complete demo, confirm the final rubric evidence, and merge only after both students run the app and checks.
-- Maintain `DECISIONS.md`, `DEMO_GUIDE.md`, and the combined screenshot inventory as the project evolves.
+- Dashboard design, expiry behavior, API integration, documentation, accessibility and end-to-end demo.
+- Each member reviews the other's database and UI/API changes and can explain the tables, joins, triggers and transactions live.
 
-Ownership identifies the agreed work split; it does not claim that a feature is complete. See [`TESTING.md`](TESTING.md) for current implementation and verification status.
+No ownership claim is a substitute for the commit history or each student's own explanation.

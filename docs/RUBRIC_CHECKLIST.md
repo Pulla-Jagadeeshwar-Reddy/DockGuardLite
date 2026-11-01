@@ -1,36 +1,22 @@
-# Rubric evidence checklist
+# Rubric Evidence Checklist — DocuGuard Lite
 
-Use this with the project blueprint during the demo. “Implemented” describes committed code and documents; it does not imply a live run was observed in this workspace. The Phase 7 verification run is recorded in `TESTING.md`.
+This maps the supplied 50-mark rubric to the simplified target. The lite implementation has not yet been completed or verified; all entries below are evidence targets, not claims of a passing grade.
 
-| # | Rubric area | Evidence to show | Status |
-|---:|---|---|---|
-| 1 | Title and real problem | DocuGuard's policy, access, acknowledgment, and audit problem in README and blueprint | Implemented |
-| 2 | Two-member contribution | `WORK_SPLIT.md`, `OWNERSHIP.md`, and Pull/Push feature branches | Implemented |
-| 3 | Database requirement | PostgreSQL plus MongoDB and pgvector | Implemented |
-| 4 | Database design | ER diagram, data dictionary, relational schema, Mongo/vector design | Implemented |
-| 5 | SQL implementation | Numbered create/alter/index/function/trigger/view/seed scripts and drop script | Implemented |
-| 6 | Database operations | Application CRUD actions and examples in `QUERIES.md` | Implemented |
-| 7 | Advanced database features | Constraints, ACID transactions, triggers, views, stored functions, GIN/HNSW indexes, full text, vector similarity, recursive CTEs | Implemented |
-| 8 | Semantic search | 384-dimensional local embeddings, permission-filtered semantic retrieval, keyword and hybrid modes | Implemented; integration test added |
-| 9 | Next.js interface | Login, document workflow, search, My Policies, coverage, audit, break-glass, dashboard pages | Implemented |
-| 10 | Integration | Next.js → Express → PostgreSQL/MongoDB; API routes and environment configuration | Implemented |
-| 11 | Authentication and roles | bcrypt, HTTP-only JWT cookie, dynamic RBAC, Admin/Doctor/Nurse/Staff | Implemented |
-| 12 | Validation and integrity | Zod edges, SQL CHECK/UNIQUE/FK constraints, transactional workflows, audit and acknowledgment triggers | Implemented |
-| 13 | Security | Permission-filtered reads/search, parameterized SQL, non-public uploads, restricted runtime DB role, append-only audit | Implemented |
-| 14 | Documentation | README, architecture, schema, testing, query, NoSQL/vector, demo, rubric, ownership, and phase notes | Implemented |
-| 15 | Git/GitHub | Per-phase Push branches, commits, and pushes | Implemented; review/merge remains a team action |
-| 16 | Demonstration | Runbook in `DEMO_GUIDE.md`; capture states listed in `SCREENSHOTS.md` | Script ready; screenshots require a running local demo |
-| 17 | Originality | Break-glass review, tamper-evident audit chain, policy version acknowledgment, compliance gaps | Implemented |
-| 18 | Level 3 database expectation | PostgreSQL plus MongoDB; vector retrieval uses PostgreSQL pgvector | Implemented |
+| Metric | Marks | Planned evidence |
+|---|---:|---|
+| ER diagram | 2 | `inputs/docuguard_er_diagram.mermaid` and Chen reference image. |
+| Relational schema, keys, relationships, constraints | 3 | `RELATIONAL_SCHEMA.md`, `inputs/docuguard_data_dictionary.md`, numbered DDL. |
+| SQL DDL with constraints | 4 | PostgreSQL CREATE/ALTER scripts and negative constraint tests. |
+| NoSQL database creation | 4 | MongoDB 7 content collection, indexes and setup command. |
+| Technology justification | 1 | `ARCHITECTURE.md`, `NOSQL_VECTOR.md`, README. |
+| DML operations | 4 | Seed and API create/read/update/delete workflows with parameterized SQL. |
+| Nested/correlated/recursive/join SQL | 4 | `QUERIES.md`: permission-filtered joins, acknowledgment anti-join, expiry predicate, version-history CTE. |
+| Advanced SQL: functions, triggers, CTE | 6 | Access/audit/expiry functions, version and audit triggers, views, transactions and recursive version lineage. |
+| NoSQL feature and CRUD | 7 | Mongo content ingestion/read/link/update/compensation cleanup plus approved metadata aggregation. |
+| Next.js interface | 3 | Login, role-specific document, Admin, acknowledgment, emergency and audit pages. |
+| Backend/API/database integration | 2 | Express routes with parameterized PostgreSQL access and Mongo content lookups. |
+| Authentication, two roles, database RBAC | 4 | bcrypt/JWT, roles in PostgreSQL, `DOCUMENT_PERMISSIONS`, role checks and API denial tests. |
+| Documentation and Git/GitHub | 2 | README, architecture/schema/query/testing/demo docs and local Git history. No remote will be configured by this agent. |
+| Originality/contribution/modification/viva | 4 | Break-glass transaction, hash-chain audit and versioned acknowledgments; `OWNERSHIP.md`, student commits and live explanation. |
 
-## Demo evidence order
-
-1. Explain the problem and design using the ER diagram and relational schema.
-2. Show authentication, role filtering, upload/version approval, and audit verification.
-3. Compare keyword, semantic, and hybrid search, then show similar policies.
-4. Show the MongoDB collection shape and aggregation widget.
-5. Assign a policy, acknowledge a version, and show completion.
-6. Show regulation score and the expired-only mandatory-control gap test.
-7. Run the available SQL/API checks and review the screenshot evidence.
-
-Never describe the example regulations or policies as official standards, clinical advice, or real patient data.
+The rubric's NoSQL category can be evidenced through MongoDB. The separate vector/retrieval implementation is not part of the lite feature plan. The simplified project still needs the instructor's acceptance of this substitution.
