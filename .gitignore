@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+# Keep the supplied root attachments in place; version their canonical copies in docs/inputs/.
+/DBMS Level 3 Project Requirements.pdf
+/DocuGuard Implementation Blueprint.docx
+/docuguard_data_dictionary.md
+/docuguard_er_diagram.mermaid
+/DocuGuard Pull and Push Work Split.md
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+dist/
+coverage/
+**/*.tsbuildinfo
+!frontend/src/app/(protected)/compliance/coverage/
+!frontend/src/app/(protected)/compliance/coverage/page.tsx
+uploads/**
+!uploads/.gitkeep
+*.log
+.DS_Store
