@@ -80,4 +80,4 @@ The plan gate is complete. Phase 4 implementation is in progress in the Lite rep
 
 ## Approval gate
 
-Phase 0 inspection, Phase 1 separate-repo import, and Phase 2 documentation work are complete. Phase 3 is approved. Phase 4 implementation is in progress in the Lite repository only.
+Phase 0 inspection, Phase 1 separate-repo import, Phase 2 documentation work, and Phase 4 implementation are complete. Phase 3 is approved. Phase 5 will update tests in the Lite repository only.
