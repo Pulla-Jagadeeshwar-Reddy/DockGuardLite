@@ -16,7 +16,7 @@ This maps each of the 14 supplied grading categories to evidence that exists in 
 | Next.js interface | 3 | frontend/src/app/login/page.tsx; frontend/src/app/(protected)/layout.tsx; frontend/src/app/(protected)/dashboard/page.tsx; frontend/src/app/(protected)/documents/page.tsx; frontend/src/app/(protected)/documents/[id]/page.tsx; frontend/src/app/(protected)/documents/new/page.tsx; frontend/src/app/(protected)/my-policies/page.tsx; frontend/src/app/(protected)/break-glass/page.tsx; frontend/src/app/(protected)/admin/users/page.tsx; frontend/src/app/(protected)/admin/acknowledgments/page.tsx; frontend/src/app/(protected)/admin/break-glass/page.tsx; frontend/src/app/(protected)/admin/audit/page.tsx |
 | Backend/API and database integration | 2 | backend/src/app.ts; backend/src/config/databases.ts; backend/src/routes/documents.ts; backend/src/routes/acknowledgments.ts; backend/src/routes/overrides.ts; backend/src/routes/audit.ts; backend/src/routes/dashboard.ts; backend/src/routes/analytics.ts |
 | Authentication, two or more roles and database-backed role/document authorization | 4 | backend/src/routes/auth.ts; backend/src/middleware/auth.ts; backend/src/routes/users.ts; database/postgres/01a_schema_core.sql (roles and document_permissions); database/postgres/04a_functions_core.sql (fn_accessible_document_ids); database/postgres/08_auth_runtime.sql; backend/test/auth.test.mjs |
-| Documentation and Git/GitHub | 2 | README.md; docs/ARCHITECTURE.md; docs/RELATIONAL_SCHEMA.md; docs/QUERIES.md; docs/TESTING.md; docs/OWNERSHIP.md; docs/DEMO_GUIDE.md; docs/RUBRIC_CHECKLIST.md; docs/SCREENSHOTS.md; local Git history. Lite has no remote configured. |
+| Documentation and Git/GitHub | 2 | README.md; docs/ARCHITECTURE.md; docs/RELATIONAL_SCHEMA.md; docs/QUERIES.md; docs/TESTING.md; docs/OWNERSHIP.md; docs/DEMO_GUIDE.md; docs/RUBRIC_CHECKLIST.md; docs/SCREENSHOTS.md; local Git history; GitHub repository Pulla-Jagadeeshwar-Reddy/DockGuardLite, branch simplify/er-lite. |
 | Originality, individual contribution, modification and viva | 4 | backend/src/routes/overrides.ts; backend/src/routes/audit.ts; database/postgres/04a_functions_core.sql; database/postgres/05a_triggers_core.sql; database/postgres/06b_views_reading.sql; docs/OWNERSHIP.md; docs/WORK_SPLIT.md. Individual credit should be supported by each student's own commits and live explanation. |
 
 ## Limits to explain during evaluation
@@ -24,4 +24,7 @@ This maps each of the 14 supplied grading categories to evidence that exists in 
 - PostgreSQL stores the four application roles and per-document role grants. Express checks role names and SQL permission queries check document grants. This is application authorization backed by relational data, not four separate PostgreSQL login roles.
 - MongoDB stores extracted policy content and supports category/keyword aggregation. PostgreSQL owns users, authorization, versions and workflow state.
 - The recursive query follows consecutive document_versions.version_number values using existing columns. It adds no relation.
-- Lite has no vector database, semantic search, notifications, regulation mapping or dependency graph.
+- The NoSQL rubric path is implemented with MongoDB content CRUD and aggregation. Lite has no vector database, semantic search, notifications, regulation mapping or dependency graph.
+
+
+The NoSQL/Vector rubric wording is treated as alternatives here: MongoDB satisfies the NoSQL option. The Lite ER model was approved without vector entities or columns.

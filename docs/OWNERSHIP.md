@@ -1,6 +1,6 @@
 # Team Ownership — DocuGuard Lite
 
-Both students should make commits in their own identity and each should understand both SQL and application behavior. The proposed slices are vertical and can be adjusted by the team before implementation.
+Both students should make commits in their own identity and each should understand both SQL and application behavior. The slices below are a contribution map for the implemented system. Each student should make genuine commits under their own identity and keep PR/commit links for the presentation.
 
 ## Member A
 

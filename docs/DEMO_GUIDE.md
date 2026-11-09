@@ -44,6 +44,6 @@ A 20-minute walkthrough using the Lite screens, seed accounts and SQL files. Sta
 2. Open database/mongo/aggregations.js and backend/src/routes/analytics.ts. The Admin API selects eligible current versions in PostgreSQL, then filters the Mongo pipeline by those ids.
 3. Summarize constraints, triggers, transactions, role grants and Mongo aggregation as extension points within the 11-entity model.
 
-## Screenshots still to capture
+## Screenshot evidence
 
-Capture genuine screenshots from the running Lite app; none are included or fabricated. Use synthetic data only. See docs/SCREENSHOTS.md for the page-state list.
+The current report contains the screenshots listed in docs/SCREENSHOTS.md. Replace the pending approval image with a post-approval/version-history state, and replace the login-error image at S15 with a real access-denied state if that specific screenshot is required. Use synthetic data only.

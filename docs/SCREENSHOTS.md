@@ -1,23 +1,27 @@
-# Screenshot Capture Checklist
+# Screenshot Evidence Checklist - DocuGuard Lite
 
-Status: all screenshots below remain for the student team to capture from the running Lite application. None are included or fabricated. Use synthetic data only; keep credentials, .env contents and private uploaded files out of images.
+The current report DocuGuard_Lite_DBMS_Mini_Project_Report_Final.docx contains the captures below. Review the exceptions before submission. Use only synthetic data and keep passwords, cookies, environment values, and private uploads out of screenshots.
 
-| # | Page / state | How to reach it |
+| # | Evidence | Current capture status |
 |---:|---|---|
-| 1 | Login with a validation error | /login; submit empty or invalid values. |
-| 2 | Admin overview: status, expiry, activity, acknowledgments, common terms | Sign in as admin1@docuguard.local; Overview. |
-| 3 | Admin document list | Admin; Documents. |
-| 4 | Doctor or Nurse list and role-aware navigation | doctor1@docuguard.local or nurse1@docuguard.local; Documents. |
-| 5 | Upload form with a selected synthetic PDF or DOCX | Doctor; Documents; upload; /documents/new. |
-| 6 | Document detail with pending version | Open uploaded document before approval. |
-| 7 | Approved version and version history | Different Admin approves the version. |
-| 8 | My Policies before and after acknowledging | nurse2@docuguard.local; My Policies. |
-| 9 | Admin acknowledgment table and department chart | Admin; Acknowledgments. |
-| 10 | Emergency form with required justification and duration | Doctor or Nurse; Emergency access. |
-| 11 | Admin emergency review queue with pending request | Admin; Emergency reviews. |
-| 12 | Audit filters, events and intact verification | Admin; Audit log; click Verify integrity. |
-| 13 | User administration with roles and departments | Admin; User administration. |
-| 14 | Mongo-backed common terms on dashboard | Admin; Overview. |
-| 15 | Role-based denial or inaccessible-document response without sensitive data | Use a role without a grant; capture visible denial state. |
+| 1 | Login validation error | Included; login page shows a generic invalid-credentials error. |
+| 2 | Admin overview/dashboard | Included. |
+| 3 | Admin policy list | Included. |
+| 4 | Doctor/Nurse role-scoped list | Included. |
+| 5 | Policy upload form | Included. |
+| 6 | Version awaiting approval | Included. |
+| 7 | Approval complete with version history | Current image shows the pending approval action. Replace/add a capture after a different Admin approves it. |
+| 8a/8b | My Policies before and after acknowledgment | Both states included. |
+| 9 | Admin acknowledgment summary | Included. |
+| 10 | Emergency access request | Included. |
+| 11 | Emergency review queue | Included. |
+| 12 | Audit log/integrity page | Included. |
+| 13 | User administration | Included. |
+| 14 | Dashboard content analytics | Included. |
+| 15 | Access denied for a role without a grant | Current image is a login error, not an access-denial response. Replace it with a genuine restricted-document denial if you want this specific evidence. |
+| C1 | PostgreSQL schema/constraints and ER diagram | Included. |
+| C2 | Audit function and trigger | Included; recursive CTE is printed in Section 5 of the report. A separate source screenshot is optional. |
+| C3 | Express API permission-aware SQL | Included. |
+| C4 | MongoDB indexes, aggregation, and content processing | Included. |
 
-SQL terminal and hash-tampering screenshots are optional if requested by the instructor. Never show passwords, JWT cookies, environment values or real patient information.
+The rubric requires sample application/code screenshots; the authorization-denial and post-approval captures are the remaining workflow screenshots to replace/add for complete visual evidence.

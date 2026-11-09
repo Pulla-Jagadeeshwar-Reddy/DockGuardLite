@@ -1,33 +1,43 @@
 # DocuGuard Lite Relational Schema
 
-The lite target has the following 11 PostgreSQL entities. The attribute-level contract and ER relationships are in `docs/inputs/docuguard_data_dictionary.md` and `docs/inputs/docuguard_er_diagram.mermaid`.
+Lite implements the approved 11-table PostgreSQL model. The complete attributes, types, nullability, keys, and delete rules are in docs/inputs/docuguard_data_dictionary.md; entity relationships are in docs/inputs/docuguard_er_diagram.mermaid.
 
 | Area | Relations |
 |---|---|
-| Identity | `departments`, `roles`, `users` |
-| Policy and versions | `document_categories`, `documents`, `document_versions`, `document_permissions` |
-| Audit and emergency access | `access_logs`, `access_overrides` |
-| Reading compliance | `policy_assignments`, `acknowledgments` |
+| Identity | departments, roles, users |
+| Policy and versions | document_categories, documents, document_versions, document_permissions |
+| Audit and emergency access | access_logs, access_overrides |
+| Reading compliance | policy_assignments, acknowledgments |
 
 ## Keys and relationships
 
-- `users.role_id` references `roles`; `users.department_id` references `departments` and becomes NULL if a department is removed.
-- `documents.category_id` and `documents.owner_id` refer to category and owner. `documents.current_version_id` points to a version and is added with ALTER after both sides exist. `document_versions.document_id` points back to its document.
-- `document_permissions` grants one role one access level on a document, with the user who granted it recorded.
-- `access_logs` records actor, document, optional version and optional emergency override. Its references restrict deletion so audit history does not lose context.
-- `access_overrides` records requester, document and optional distinct reviewer.
-- `policy_assignments` targets a role, department, or both. `acknowledgments` ties a user and assignment to a particular document version.
+- Users reference one role and optionally a department.
+- Documents reference a category, owner, and nullable current version. Versions reference their document. 02_alter.sql adds the current-version foreign key after both tables exist.
+- Document permissions link a document to a role and record the granting user.
+- Access logs reference the actor and document, with optional version and emergency override context.
+- Policy assignments target a role, a department, or both. Acknowledgments link a user, assignment, and exact version.
 
-## Important constraints and behavior
+## Database-enforced rules
 
-DDL enforces role and status enumerations, required values, unique emails/names/version numbers/grants/acknowledgments, date ordering, maker-checker, assignment target presence, break-glass limits, reviewer/requester distinction, and foreign-key delete behavior. Pending acknowledgments are computed, not stored. Version approval and expiry are handled by triggers/functions. Access logs use a SHA-256 predecessor chain, immutable trigger, and restricted runtime grants.
+The DDL enforces required columns, unique emails and names, allowed status/action values, version numbering, maker-checker approval, valid date ranges, permission uniqueness, assignment target presence, acknowledgment uniqueness, break-glass justification/duration and distinct reviewer rules, and foreign-key delete behavior. Triggers verify that acknowledgments match the current approved version. Pending acknowledgments are derived by anti-join.
 
-The corrected simplified model omits 
-## Views, functions and indexes planned
+Access logs use a SHA-256 predecessor chain. A BEFORE INSERT trigger serializes appends with an advisory transaction lock and calculates prev_hash and row_hash. An immutable trigger rejects update/delete; the runtime role also lacks those privileges. verify_audit_chain() returns the first broken log id or NULL and does not persist a verification record.
 
-Views will summarize document status, active documents expiring soon, access activity, emergency review queue, acknowledgment completion, and acknowledgment completion by department. Functions will cover accessible document ids, audit hash calculation/verification, override expiry, and version expiry. Triggers will maintain updated timestamps, legal version transitions/current version, append-only hash logs, and acknowledgment behavior only where it does not require removed storage. Indexes will support owner/category/status, active role grants, expiry, access history, active overrides, assignment/ack joins, and audit sequence.
+## Implemented views
 
-## Migration mapping
+- v_document_status_summary: counts documents by status.
+- v_expiring_soon: active documents whose current approved version expires within 30 days.
+- v_access_activity: daily action and break-glass counts.
+- v_break_glass_review_queue: overrides awaiting admin review.
+- v_ack_compliance: eligible and acknowledged counts by assignment.
+- v_ack_compliance_by_department: department completion totals.
 
-The existing numbered migration runner will be retained, with DDL is split between core/reading schema, circular-FK ALTER, indexes, functions, triggers, views, seeds, runtime role and checksum migration. Exact object inventory and change mapping are in `SIMPLIFICATION_PLAN.md`.
+## Implemented functions and triggers
 
+Core SQL functions include fn_accessible_document_ids, fn_access_log_hash, verify_audit_chain, fn_expire_overrides, and fn_expiry_sweep. Reading/workflow functions include fn_assignment_completion, fn_validate_version_transition, fn_after_version_approved, and fn_validate_acknowledgment. Triggers maintain updated_at, enforce legal version transitions, switch the current version and supersede the prior one transactionally, append immutable audit events, and validate acknowledgments.
+
+## Indexes and migration files
+
+03a_indexes_core.sql and 03b_indexes_reading.sql index role/department lookup, document owner/category/status/version, active grants, expiry, audit history, overrides, assignments, and acknowledgments.
+
+The numbered files build the schema in this order: core and reading tables, circular foreign-key alteration, indexes, functions, triggers, views, seeds, runtime privileges, and document seed data. 99_drop.sql removes Lite objects. MongoDB content storage and aggregation are described in docs/NOSQL_VECTOR.md; Lite intentionally has no vector column or vector-search feature.
